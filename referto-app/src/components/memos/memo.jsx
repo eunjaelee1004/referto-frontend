@@ -1,19 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NotepadText, Copy } from "lucide-react";
 import { getMemo, updateMemo } from "../../apis/api";
 import SuccessModal from "../Modals/SuccessModal";
 
-const ReferenceMemo = ({ content, paperId }) => {
+const ReferenceMemo = ({ content, paperId, onClose = () => {} }) => {
   const [memoContent, setMemoContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [copySuccessModalIsOpen, setCopySuccessModalIsOpen] = useState(false);
-  //const [saveSuccessModalIsOpen, setSaveSuccessModalIsOpen] = useState(false);
+  const memoRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (memoRef.current && !memoRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
 
   useEffect(() => {
     const getMemoAPI = async () => {
       const memo = await getMemo(paperId);
       setMemoContent(memo.content);
-      console.log(memo);
     };
     getMemoAPI();
   }, [paperId]);
@@ -39,53 +51,37 @@ const ReferenceMemo = ({ content, paperId }) => {
     setCopySuccessModalIsOpen(true);
   };
 
-  // const onSubmit = async (e) => {
-  //   e.preventDefault();
-  //   const response = await updateMemo(paperId, { content: memoContent });
-  //   window.location.reload();
-  //   setSaveSuccessModalIsOpen(true);
-  //   //setMemoContent(response);
-  // };
-
   return (
-    <form className="form bsg-white">
+    <form ref={memoRef} className="form bsg-white h-full p-2 sm:p-4">
       <div className="self-stretch flex justify-between items-center">
-        <div className="grow shrink basis-0 h-100% flex items-center gap-[7px]">
-          <NotepadText className="w-6 h-6 relative" />
-          <div className="text-neutral-700 text-lg font-semibold font-['Pretendard'] leading-[27px]">
+        <div className="grow shrink basis-0 h-100% flex items-center gap-[5px] sm:gap-[7px]">
+          <NotepadText className="w-5 h-5 sm:w-6 sm:h-6 relative" />
+          <div className="text-neutral-700 text-base sm:text-lg font-semibold font-['Pretendard'] leading-[27px]">
             메모
           </div>
         </div>
-        <div className="font-[Pretendard] font-medium text-[12px] text-neutral-500">{isSaving ? "저장 중..." : "저장 됨"}</div>
+        <div className="font-[Pretendard] font-medium text-[12px] sm:text-[14px] text-neutral-500">
+          {isSaving ? "저장 중..." : "저장 됨"}
+        </div>
       </div>
-      <div className="self-stretch text-neutral-900 text-base font-medium font-['Pretendard'] leading-normal py-2">
-        <label htmlFor="content" className="label"></label>
+      <div className="self-stretch text-neutral-900 text-sm sm:text-base font-medium font-['Pretendard'] leading-normal py-2 flex-grow">
         <textarea
           placeholder="여기에 필요한 메모를 작성하세요. 복사 시 참고문헌이 함께 복사됩니다."
           defaultValue={memoContent}
           onChange={handleContentChange}
-          className="font-[Pretendard] font-md border-2 border-neutral-300 rounded-md w-full h-full px-2 py-2 focus:outline-none focus:border-neutral-500 resize-none"
+          className="font-[Pretendard] font-md border-2 border-neutral-300 rounded-md w-full h-[150px] sm:h-[200px] px-2 py-2 focus:outline-none focus:border-neutral-500 resize-none placeholder:text-neutral-400 placeholder:font-normal text-sm sm:text-base"
           rows="10"
           cols="40"
         />
       </div>
-      <div className="self-stretch justify-end items-center gap-[15px] inline-flex w-full">
-        <div className="grow shrink basis-0 h-10 justify-end items-center gap-[18px] flex">
-          {/*<button
-            //onClick={onSubmit}
-            className="px-4 py-2 rounded-md border border-neutral-700 justify-center items-center gap-2.5 flex"
-          >
-            <Save className="w-[18px] h-[18px] relative text-neutral-700" />
-            <div className="text-right text-neutral-700 text-lg font-medium font-['Pretendard'] leading-normal">
-              Save
-            </div>
-          </button>*/}
+      <div className="self-stretch justify-end items-center gap-[10px] sm:gap-[15px] inline-flex w-full">
+        <div className="grow shrink basis-0 h-9 sm:h-10 justify-end items-center gap-[18px] flex">
           <button
             onClick={handleCopy}
-            className="px-4 py-2 bg-neutral-900 rounded-md justify-center items-center gap-2.5 flex"
+            className="px-2.5 sm:px-2.5 py-1.5 sm:py-1.5 bg-neutral-900 rounded-md justify-center items-center gap-2 sm:gap-2 flex"
           >
-            <Copy className="w-[18px] h-[18px] relative text-white" />
-            <div className="text-right text-white text-lg font-medium font-['Pretendard'] leading-normal">
+            <Copy className="w-4 sm:w-4 h-4 sm:h-4 relative text-white" />
+            <div className="text-right text-white text-base sm:text-base font-medium font-['Pretendard'] leading-normal">
               복사
             </div>
           </button>
