@@ -2,21 +2,29 @@ import { instance, instanceWithToken } from "./axios";
 
 // User 관련 API들
 export const signIn = async (data) => {
-  const response = await instance.post("/user/auth/", data);
-  if (response.status === 200) {
-  } else {
-    console.log("[ERROR] error while signing in");
+  try {
+    const response = await instance.post("/user/auth/", data);
+    if (response.status === 200) {
+      return response.data;
+    }
+    throw new Error('Login failed');
+  } catch (error) {
+    console.error("[ERROR] error while signing in:", error.response?.data || error.message);
+    throw error;
   }
 };
 
 export const signUp = async (data) => {
-  const response = await instance.post("/user/register/", data);
-  if (response.status === 200 || response.status === 201) {
-    return response.data;
-  } else {
-    console.log("[ERROR] error while signing up");
+  try {
+    const response = await instance.post("/user/register/", data);
+    if (response.status === 200 || response.status === 201) {
+      return response.data;
+    }
+    throw new Error('Signup failed');
+  } catch (error) {
+    console.error("[ERROR] error while signing up:", error.response?.data || error.message);
+    throw error;
   }
-  return response;
 };
 
 export const getUser = async () => {
@@ -32,12 +40,16 @@ export const getUser = async () => {
 
 // Assignments 관련 API들
 export const getAssignments = async () => {
-  const response = await instanceWithToken.get("/assignments/");
-  if (response.status === 200) {
-    console.log("ASSIGNMENTS GET SUCCESS");
-    return response.data;
-  } else {
-    console.log("[ERROR] error while getting assignments");
+  try {
+    const response = await instanceWithToken.get("/assignments/");
+    if (response.status === 200) {
+      console.log("ASSIGNMENTS GET SUCCESS");
+      return response.data;
+    }
+    throw new Error('Failed to get assignments');
+  } catch (error) {
+    console.error("[ERROR] error while getting assignments:", error.response?.data || error.message);
+    throw error;
   }
 };
 
@@ -83,12 +95,16 @@ export const getAssignment = async (id) => {
 // Papers 관련 API
 
 export const uploadPaper = async (formData, config) => {
-  const response = await instanceWithToken.post("/papers/", formData, config);
-  if (response.status === 201) {
-    console.log("PAPER UPLOAD SUCCESS");
-    return response.data;
-  } else {
-    console.log("[ERROR] error while uploading paper");
+  try {
+    const response = await instanceWithToken.post("/papers/", formData, config);
+    if (response.status === 201) {
+      console.log("PAPER UPLOAD SUCCESS");
+      return response.data;
+    }
+    throw new Error('Failed to upload paper');
+  } catch (error) {
+    console.error("[ERROR] error while uploading paper:", error.response?.data || error.message);
+    throw error;
   }
 };
 
@@ -225,12 +241,17 @@ export const testUploadPaper = async (formData, config) => {
 
 // 소셜 로그인 API들
 export const googleSignIn = async () => {
-  const backendUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://api.referto.site'
-    : 'http://localhost:8000';
+  try {
+    // 개발 환경에서는 무조건 localhost 사용
+    const backendUrl = 'http://localhost:8000';
+    const redirectUri = `${backendUrl}/api/user/google/login/`;
     
-  const redirectUri = `${backendUrl}/api/user/google/login/`;
-  window.location.href = redirectUri;
+    console.log('Redirecting to:', redirectUri);
+    window.location.href = redirectUri;
+  } catch (error) {
+    console.error('Google Sign In Error:', error);
+    throw error;
+  }
 };
 
 // export const naverSignIn = async () => {

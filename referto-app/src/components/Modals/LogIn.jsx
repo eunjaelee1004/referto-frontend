@@ -6,12 +6,16 @@ import Kakao from "../../assets/images/Kakao.png"
 import { useNavigate } from "react-router-dom";
 import AlertModal from "./AlertModal";
 import alertCircle from "../../assets/images/alert-circle.svg";
+import { useDispatch } from 'react-redux';
+import { login, setUser } from '../../redux/authSlice';
+import { trackEvent } from '../../utils/analytics';
 
 const LogInModal = (props) => {
   const inputRef = useRef(null);
   const [errorAlertModalIsOpen, setErrorAlertModalIsOpen] = useState(false);
   const { isUserLoggedIn, setIsUserLoggedIn } = props;
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const handleErrorAlertCancel = () => {
     setErrorAlertModalIsOpen(false);
     if (inputRef.current) {
@@ -57,11 +61,18 @@ const LogInModal = (props) => {
   const handleLogInSubmit = async (e) => {
     e.preventDefault();
     try {
-      await signIn(logInData);
-      setIsUserLoggedIn(true);
+      const response = await signIn(logInData);
+      const userData = await getUser();
+      trackEvent('login', { method: 'email' });
+      dispatch(login());
+      dispatch(setUser(userData));
       handleRedirect();
     } catch (error) {
-      console.error("Error logging in:", error.message);
+      trackEvent('login_error', { 
+        method: 'email',
+        error: error.response?.data || error.message 
+      });
+      console.error("Error logging in:", error.response?.data || error.message);
       setErrorAlertModalIsOpen(true);
     }
   };
@@ -69,11 +80,22 @@ const LogInModal = (props) => {
   const handleGoogleLogin = async (e) => {
     e.preventDefault();
     googleSignIn();
+    trackEvent('login', { method: 'google' });
 
     const checkToken = () => {
       const token = localStorage.getItem('access_token');
       if (token) {
-        setIsUserLoggedIn(true);
+        const fetchUserData = async () => {
+          try {
+            const userData = await getUser();
+            dispatch(login());
+            dispatch(setUser(userData));
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+            setErrorAlertModalIsOpen(true);
+          }
+        };
+        fetchUserData();
       } else {
         setErrorAlertModalIsOpen(true);
       }
